@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.musicapp">
+    package="fr.HirooHG.musicapp">
    <application
-        android:label="musicapp"
+        android:label="Music App"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
