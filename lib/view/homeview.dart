@@ -16,14 +16,6 @@ class HomeView extends StatelessWidget {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
 
-    Hive.openBox<Music>("categories").then((box) async {
-      await box.add(Music("", "", "", Category("")));
-
-      var list = box.values.toList();
-      print(list);
-
-      await box.close();
-    });
 
     return Scaffold(
       body: SafeArea(
@@ -34,3 +26,16 @@ class HomeView extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
