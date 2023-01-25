@@ -4,15 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:musicapp/modelview/musicbloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../modelview/music.dart';
+import 'package:musicapp/modelview/music.dart';
 
 class HomeView extends StatelessWidget {
   HomeView({super.key});
-
-  Box? musicBox;
-  Box? artistBox;
-  Box? categoryBox;
 
   late double width;
   late double height;
@@ -25,156 +23,161 @@ class HomeView extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            "select music name for \n$name",
-            style: const TextStyle(
-              fontFamily: "Ubuntu",
-              fontWeight: FontWeight.bold,
-              color: Color(0xff7dba7a),
-              fontSize: 15
-            )
-          ),
-          backgroundColor: const Color(0xFF1a1a1a),
-          content: SizedBox(
-            height: height * 0.3,
-            child: Column(
-              children: [
-                SizedBox(
-                  width: width * 0.5,
-                  child: TextField(
-                    controller: nameController,
-                    style: const TextStyle(
-                      color: Colors.white
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: "name",
-                      labelStyle: TextStyle(
-                        color: Colors.white
-                      ),
-                    ),
+        return BlocBuilder<MusicBloc, MusicState>(
+          builder: (context, musicState) {
+            return AlertDialog(
+                title: Text(
+                  "select music name for \n$name",
+                  style: const TextStyle(
+                    fontFamily: "Ubuntu",
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff7dba7a),
+                    fontSize: 15
                   )
                 ),
-                SizedBox(
-                  width: width * 0.5,
-                  child: TextField(
-                    style: const TextStyle(
-                      color: Colors.white
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: "artist",
-                      labelStyle: TextStyle(
-                        color: Colors.white
-                      )
-                    ),
-                    onSubmitted: (value) {
-
-                    },
-                  )
-                ),
-                SizedBox(
-                  width: width * 0.5,
-                  child: TextField(
-                    style: const TextStyle(
-                      color: Colors.white
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: "Category",
-                      labelStyle: TextStyle(
-                          color: Colors.white
-                      )
-                    ),
-                    onSubmitted: (value) {
-
-                    },
-                  )
-                ),
-                SizedBox(
-                  width: width * 0.5,
-                  child: DropdownButtonFormField(
-                    items: artistBox!.values.map((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(
-                            e.name,
-                            style: const TextStyle(
-                            color: Colors.white
-                          )
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: width * 0.5,
-                  child: DropdownButtonFormField(
-                    items: categoryBox!.values.map((e) {
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(
-                          e.name,
+                backgroundColor: const Color(0xFF1a1a1a),
+                content: SizedBox(
+                  height: height * 0.3,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: width * 0.5,
+                        child: TextField(
+                          controller: nameController,
                           style: const TextStyle(
                             color: Colors.white
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: "name",
+                            labelStyle: TextStyle(
+                              color: Colors.white
+                            ),
+                          ),
+                        )
+                      ),
+                      SizedBox(
+                        width: width * 0.5,
+                        child: TextField(
+                          style: const TextStyle(
+                            color: Colors.white
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: "artist",
+                            labelStyle: TextStyle(
+                              color: Colors.white
+                            )
+                          ),
+                          onSubmitted: (value) {
+                          },
+                        )
+                      ),
+                      SizedBox(
+                          width: width * 0.5,
+                          child: TextField(
+                            style: const TextStyle(
+                                color: Colors.white
+                            ),
+                            decoration: const InputDecoration(
+                                labelText: "Category",
+                                labelStyle: TextStyle(
+                                    color: Colors.white
+                                )
+                            ),
+                            onSubmitted: (value) {
+
+                            },
                           )
+                      ),
+                      SizedBox(
+                        width: width * 0.5,
+                        child: DropdownButtonFormField(
+                          value: musicState.currentArtist,
+                          items: musicState.artists.map((e) {
+                            return DropdownMenuItem(
+                              value: e,
+                              child: Text(
+                                e.name,
+                                style: const TextStyle(
+                                  color: Colors.white
+                                )
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                          },
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                    },
+                      ),
+                      SizedBox(
+                        width: width * 0.5,
+                        child: DropdownButtonFormField(
+                          value: musicState.currentCategory,
+                          items: musicState.categories.map((e) {
+                            return DropdownMenuItem(
+                              value: e,
+                              child: Text(
+                                  e.name,
+                                  style: const TextStyle(
+                                      color: Colors.white
+                                  )
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                var name = nameController.text;
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      var name = nameController.text;
 
-                if(name.isNotEmpty && musicBox != null) {
-                  var music = Music(name: name, artist: Artist(name: ""), link: path, category: Category.empty());
-                  musicBox!.add(music);
-                  nameController.text = "";
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text(
-               "register",
-                style: TextStyle(
-                  fontFamily: "Ubuntu",
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffff7bff)
-                )
-              )
-            )
-          ]
+                      if(name.isNotEmpty) {
+                        nameController.text = "";
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: const Text(
+                      "register",
+                      style: TextStyle(
+                        fontFamily: "Ubuntu",
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xffff7bff)
+                      )
+                    )
+                  )
+                ]
+            );
+          },
         );
       }
     );
   }
 
-  String test = "yay";
+  bool isLoaded = false;
 
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
 
-    Hive.openBox("musics").then((box) {
-      musicBox = box;
-      print(musicBox!.values);
-    });
+    //if(!isLoaded) {
+    //  BlocProvider.of<MusicBloc>(context).add(const InitMusicEvent());
+    //  isLoaded = true;
+    //}
 
-    Hive.openBox<Artist>("artists").then((box) {
-      artistBox = box;
-    });
+    Hive.openBox<Music>("musics").then((value) {
+      for (var i in value.values) {
+        print(i.name);
+      }
 
-    Hive.openBox<Artist>("categories").then((box) {
-      categoryBox = box;
+      for (var i in value.values) {
+        i.name = "yay";
+        print(i.name);
+      }
     });
-
 
     return Scaffold(
       body: SafeArea(
@@ -183,7 +186,7 @@ class HomeView extends StatelessWidget {
           child: Center(
             child: TextButton(
               onPressed: () async {
-                var dir = Directory("/data/user/0/fr.HirooHG.musicapp/Music");
+                var dir = Directory("/data/user/0/fr.HirooHG.musicapp/musics");
                 var files = dir.listSync();
                 for(var i in files) {
                   await dia(context: context, path: i.path);

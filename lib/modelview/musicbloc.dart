@@ -5,12 +5,28 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'music.dart';
 
+import 'package:musicapp/model/hivehandler.dart';
+
 abstract class MusicEvent {
   const MusicEvent();
 }
-
 class InitMusicEvent extends MusicEvent {
   const InitMusicEvent();
+}
+class AddMusicEvent extends MusicEvent {
+  AddMusicEvent({required this.music});
+
+  final Music music;
+}
+class AddCategoryEvent extends MusicEvent {
+  AddCategoryEvent({required this.category});
+
+  final Category category;
+}
+class AddArtistEvent extends MusicEvent {
+  AddArtistEvent({required this.artist});
+
+  final Artist artist;
 }
 
 abstract class MusicState {
@@ -24,45 +40,77 @@ abstract class MusicState {
   List<Artist> artists;
   Artist currentArtist;
 
+  HiveHandler hiveHandler;
+
   MusicState({
     required this.musics,
-    required this.allMusics,
+    required this.artists,
     required this.categories,
+    required this.allMusics,
     required this.currentMusic,
     required this.currentCategory,
     required this.currentArtist,
-    required this.artists,
+    required this.hiveHandler
   });
 }
-
 class InitMusicState extends MusicState {
   InitMusicState({
     required super.musics,
-    required super.allMusics,
     required super.categories,
+    required super.artists,
+    required super.allMusics,
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.artists,
+    required super.hiveHandler
   });
 
   Future init() async {
-    Hive.openBox<Music>("musics").then((box) async {
-      musics = box.values.toList();
-      await box.close();
-    });
+    musics = (await hiveHandler.musicBox).values.toList();
+    categories = (await hiveHandler.categoryBox).values.toList();
+    artists = (await hiveHandler.artistBox).values.toList();
+
+    allMusics.addAll(musics);
+
+    if (!categories.any((element) => element.name == "No category")) {
+      await hiveHandler.createCategory(Category.empty());
+    }
+
+    if (!artists.any((element) => element.name == "unknown")) {
+      await hiveHandler.createArtist(Artist.empty());
+    }
+  }
+}
+class AddedMusicState extends MusicState {
+  AddedMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.hiveHandler
+  });
+
+  Future add(Music music) async {
+    if(!musics.any((element) => element == music)) {
+      musics.add(music);
+      await hiveHandler.createMusic(music);
+    }
   }
 }
 
 class MusicBloc extends Bloc<MusicEvent, MusicState> {
   MusicBloc() : super(InitMusicState(
-      musics: [],
-      allMusics: [],
-      categories: [],
-      artists: [],
-      currentMusic: Music.empty(),
-      currentCategory: Category.empty(),
-      currentArtist: Artist.empty(),
+    musics: [],
+    allMusics: [],
+    categories: [],
+    artists: [],
+    currentMusic: Music.empty(),
+    currentCategory: Category.empty(),
+    currentArtist: Artist.empty(),
+    hiveHandler: HiveHandler()
   )) {
     on<MusicEvent>(onMusicEvent);
   }
@@ -78,9 +126,16 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
         );
         await nextState.init();
         emit(nextState);
+        break;
+      case AddMusicEvent:
+        break;
+      case AddArtistEvent:
+        break;
+      case AddCategoryEvent:
         break;
     }
   }

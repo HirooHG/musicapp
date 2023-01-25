@@ -30,20 +30,34 @@ class Music extends HiveObject {
     artist = Artist.empty(),
     link = "",
     category = Category.empty();
+  @override bool operator ==(Object other) {
+    return other.runtimeType == Music
+        && name == (other as Music).name
+        && artist == other.artist
+        && link == other.link
+        && category == other.category;
+  }
 }
-class Category{
+class Category extends HiveObject{
   String name;
 
   Category({required this.name});
   Category.empty() :
-    name = "";
+    name = "No category";
+  @override bool operator ==(Object other) {
+    return other.runtimeType == Category && name == (other as Category).name;
+  }
 }
-class Artist {
+class Artist extends HiveObject{
   String name;
 
   Artist({required this.name});
   Artist.empty() :
     name = "unknown";
+
+  @override bool operator ==( other) {
+    return other.runtimeType == Artist && name == (other as Artist).name;
+  }
 }
 
 //adapter Hive
