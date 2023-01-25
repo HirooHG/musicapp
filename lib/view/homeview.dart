@@ -10,13 +10,14 @@ import '../modelview/music.dart';
 class HomeView extends StatelessWidget {
   HomeView({super.key});
 
-  Box? box;
+  Box? musicBox;
+  Box? artistBox;
+  Box? categoryBox;
 
   late double width;
   late double height;
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController artistController = TextEditingController();
 
   Future dia ({required BuildContext context, required String path}) async {
     var name = path.split("/")[6];
@@ -50,14 +51,13 @@ class HomeView extends StatelessWidget {
                       labelText: "name",
                       labelStyle: TextStyle(
                         color: Colors.white
-                      )
+                      ),
                     ),
                   )
                 ),
                 SizedBox(
                   width: width * 0.5,
                   child: TextField(
-                    controller: artistController,
                     style: const TextStyle(
                       color: Colors.white
                     ),
@@ -67,8 +67,64 @@ class HomeView extends StatelessWidget {
                         color: Colors.white
                       )
                     ),
+                    onSubmitted: (value) {
+
+                    },
                   )
-                )
+                ),
+                SizedBox(
+                  width: width * 0.5,
+                  child: TextField(
+                    style: const TextStyle(
+                      color: Colors.white
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: "Category",
+                      labelStyle: TextStyle(
+                          color: Colors.white
+                      )
+                    ),
+                    onSubmitted: (value) {
+
+                    },
+                  )
+                ),
+                SizedBox(
+                  width: width * 0.5,
+                  child: DropdownButtonFormField(
+                    items: artistBox!.values.map((e) {
+                      return DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                            e.name,
+                            style: const TextStyle(
+                            color: Colors.white
+                          )
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: width * 0.5,
+                  child: DropdownButtonFormField(
+                    items: categoryBox!.values.map((e) {
+                      return DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          e.name,
+                          style: const TextStyle(
+                            color: Colors.white
+                          )
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -76,12 +132,11 @@ class HomeView extends StatelessWidget {
             TextButton(
               onPressed: () {
                 var name = nameController.text;
-                var artist = artistController.text;
 
-                if(name.isNotEmpty && artist.isNotEmpty && box != null) {
-                  var music = Music(name: name, artist: Artist(name: artist), link: path, category: Category.empty());
-                  box!.add(music);
-                  nameController.text = ""; artistController.text = "";
+                if(name.isNotEmpty && musicBox != null) {
+                  var music = Music(name: name, artist: Artist(name: ""), link: path, category: Category.empty());
+                  musicBox!.add(music);
+                  nameController.text = "";
                   Navigator.of(context).pop();
                 }
               },
@@ -100,17 +155,26 @@ class HomeView extends StatelessWidget {
     );
   }
 
+  String test = "yay";
+
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
     height = MediaQuery.of(context).size.height;
 
-    Hive.openBox("musics").then((tbox) async {
-      box = tbox;
-      await box!.delete(0);
-      await box!.delete(1);
-      print(box!.values);
+    Hive.openBox("musics").then((box) {
+      musicBox = box;
+      print(musicBox!.values);
     });
+
+    Hive.openBox<Artist>("artists").then((box) {
+      artistBox = box;
+    });
+
+    Hive.openBox<Artist>("categories").then((box) {
+      categoryBox = box;
+    });
+
 
     return Scaffold(
       body: SafeArea(
@@ -119,13 +183,24 @@ class HomeView extends StatelessWidget {
           child: Center(
             child: TextButton(
               onPressed: () async {
-                var dir = Directory("/data/user/0/fr.HirooHG.musicapp/musics");
+                var dir = Directory("/data/user/0/fr.HirooHG.musicapp/Music");
                 var files = dir.listSync();
                 for(var i in files) {
                   await dia(context: context, path: i.path);
                 }
               },
-              child: const Text("File")
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(9),
+                child: const Text(
+                  "File",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold
+                  )
+                ),
+              )
             )
           )
         )

@@ -16,11 +16,13 @@ class InitMusicEvent extends MusicEvent {
 abstract class MusicState {
   List<Music> musics;
   List<Music> allMusics;
+  Music currentMusic;
 
   List<Category> categories;
-
-  Music currentMusic;
   Category currentCategory;
+
+  List<Artist> artists;
+  Artist currentArtist;
 
   MusicState({
     required this.musics,
@@ -28,6 +30,8 @@ abstract class MusicState {
     required this.categories,
     required this.currentMusic,
     required this.currentCategory,
+    required this.currentArtist,
+    required this.artists,
   });
 }
 
@@ -38,11 +42,13 @@ class InitMusicState extends MusicState {
     required super.categories,
     required super.currentMusic,
     required super.currentCategory,
+    required super.currentArtist,
+    required super.artists,
   });
 
   Future init() async {
     Hive.openBox<Music>("musics").then((box) async {
-      var list = box.values.toList();
+      musics = box.values.toList();
       await box.close();
     });
   }
@@ -53,8 +59,10 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
       musics: [],
       allMusics: [],
       categories: [],
+      artists: [],
       currentMusic: Music.empty(),
       currentCategory: Category.empty(),
+      currentArtist: Artist.empty(),
   )) {
     on<MusicEvent>(onMusicEvent);
   }
@@ -68,6 +76,8 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           categories: state.categories,
           currentMusic: state.currentMusic,
           currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
         );
         await nextState.init();
         emit(nextState);

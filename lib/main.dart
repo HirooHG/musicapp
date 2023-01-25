@@ -7,12 +7,14 @@ import "modelview/music.dart";
 import 'musicapp.dart';
 
 void main() async {
-  var dir = Directory("/data/user/0/fr.HirooHG.musicapp/musics");
+  var dir = Directory("/data/user/0/fr.HirooHG.musicapp/Music");
   if(! (await dir.exists())) {
     await dir.create();
   }
 
   await Hive.initFlutter();
   Hive.registerAdapter(MusicAdapter());
+  Hive.registerAdapter(ArtistAdapter());
+  Hive.registerAdapter(CategoryAdapter());
   runApp(const MusicApp());
 }

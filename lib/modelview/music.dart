@@ -3,6 +3,7 @@ import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+//class
 class Music extends HiveObject {
 
   String name;
@@ -37,7 +38,6 @@ class Category{
   Category.empty() :
     name = "";
 }
-
 class Artist {
   String name;
 
@@ -46,6 +46,7 @@ class Artist {
     name = "unknown";
 }
 
+//adapter Hive
 class MusicAdapter extends TypeAdapter<Music> {
   @override
   final typeId = 0;
@@ -61,4 +62,31 @@ class MusicAdapter extends TypeAdapter<Music> {
     writer.write({"name": obj.name,"artist": obj.artist.name, "link": obj.link, "category": obj.category.name});
   }
 }
+class ArtistAdapter extends TypeAdapter<Artist> {
+  @override
+  final typeId = 1;
 
+  @override
+  Artist read(BinaryReader reader) {
+    return Artist(name: reader.read());
+  }
+
+  @override
+  void write(BinaryWriter writer, Artist obj) {
+    writer.write(obj.name);
+  }
+}
+class CategoryAdapter extends TypeAdapter<Category> {
+  @override
+  final typeId = 2;
+
+  @override
+  Category read(BinaryReader reader) {
+    return Category(name: reader.read());
+  }
+
+  @override
+  void write(BinaryWriter writer, Category obj) {
+    writer.write(obj.name);
+  }
+}
