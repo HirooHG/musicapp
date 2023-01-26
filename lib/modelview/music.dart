@@ -30,12 +30,29 @@ class Music extends HiveObject {
     artist = Artist.empty(),
     link = "",
     category = Category.empty();
+
+  Map<String, dynamic> toMap() {
+    return {
+      "key": key,
+      "box": {
+        "name": box!.name,
+        "path": box!.path,
+      },
+      "name": name,
+      "artist": artist.toMap(),
+      "link": link,
+      "category": category.toMap(),
+    };
+  }
+
   @override bool operator ==(Object other) {
     return other.runtimeType == Music
         && name == (other as Music).name
         && artist == other.artist
         && link == other.link
-        && category == other.category;
+        && category == other.category
+        && key == other.key
+        && box == other.box;
   }
 }
 class Category extends HiveObject{
@@ -44,19 +61,41 @@ class Category extends HiveObject{
   Category({required this.name});
   Category.empty() :
     name = "No category";
+
+  Map<String, dynamic> toMap() {
+    return {
+      "key": key,
+      "name": name
+    };
+  }
+
   @override bool operator ==(Object other) {
-    return other.runtimeType == Category && name == (other as Category).name;
+    return other.runtimeType == Category
+        && name == (other as Category).name
+        && key == other.key
+        && box == other.box;
   }
 }
 class Artist extends HiveObject{
+
   String name;
 
   Artist({required this.name});
   Artist.empty() :
     name = "unknown";
 
-  @override bool operator ==( other) {
-    return other.runtimeType == Artist && name == (other as Artist).name;
+  Map<String, dynamic> toMap() {
+    return {
+      "key": key,
+      "name": name
+    };
+  }
+
+  @override bool operator ==(Object other) {
+    return other.runtimeType == Artist
+        && name == (other as Artist).name
+        && key == other.key
+        && box == other.box;
   }
 }
 

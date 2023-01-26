@@ -28,6 +28,16 @@ class AddArtistEvent extends MusicEvent {
 
   final Artist artist;
 }
+class ChangeCategoryEvent extends MusicEvent {
+  ChangeCategoryEvent({required this.category});
+
+  final Category category;
+}
+class ChangeArtistEvent extends MusicEvent {
+  ChangeArtistEvent({required this.artist});
+
+  final Artist artist;
+}
 
 abstract class MusicState {
   List<Music> musics;
@@ -70,7 +80,9 @@ class InitMusicState extends MusicState {
     categories = (await hiveHandler.categoryBox).values.toList();
     artists = (await hiveHandler.artistBox).values.toList();
 
-    allMusics.addAll(musics);
+    if(allMusics.isEmpty) {
+      allMusics.addAll(musics);
+    }
 
     if (!categories.any((element) => element.name == "No category")) {
       await hiveHandler.createCategory(Category.empty());
@@ -79,6 +91,9 @@ class InitMusicState extends MusicState {
     if (!artists.any((element) => element.name == "unknown")) {
       await hiveHandler.createArtist(Artist.empty());
     }
+
+    currentCategory = categories[0];
+    currentArtist = artists[0];
   }
 }
 class AddedMusicState extends MusicState {
@@ -119,7 +134,6 @@ class AddedArtistState extends MusicState {
     }
   }
 }
-
 class AddedCategoryState extends MusicState {
   AddedCategoryState({
     required super.musics,
@@ -137,6 +151,38 @@ class AddedCategoryState extends MusicState {
       categories.add(category);
       await hiveHandler.createCategory(category);
     }
+  }
+}
+class ChangedCategoryState extends MusicState {
+  ChangedCategoryState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.hiveHandler
+  });
+
+  Future change(Category category) async {
+    currentCategory = categories.singleWhere((element) => element == category);
+  }
+}
+class ChangedArtistState extends MusicState {
+  ChangedArtistState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.hiveHandler
+  });
+
+  Future change(Artist artist) async {
+    currentArtist = artists.singleWhere((element) => element == artist);
   }
 }
 
@@ -185,8 +231,32 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
         emit(nextState);
         break;
       case AddArtistEvent:
+        AddedArtistState nextState = AddedArtistState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
+        );
+        await nextState.add((event as AddArtistEvent).artist);
+        emit(nextState);
         break;
       case AddCategoryEvent:
+        AddedCategoryState nextState = AddedCategoryState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
+        );
+        await nextState.add((event as AddCategoryEvent).category);
+        emit(nextState);
         break;
     }
   }
