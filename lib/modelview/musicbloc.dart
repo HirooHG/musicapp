@@ -100,6 +100,45 @@ class AddedMusicState extends MusicState {
     }
   }
 }
+class AddedArtistState extends MusicState {
+  AddedArtistState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.hiveHandler
+  });
+
+  Future add(Artist artist) async {
+    if(!artists.any((element) => element == artist)) {
+      artists.add(artist);
+      await hiveHandler.createArtist(artist);
+    }
+  }
+}
+
+class AddedCategoryState extends MusicState {
+  AddedCategoryState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.hiveHandler
+  });
+
+  Future add(Category category) async {
+    if(!categories.any((element) => element == category)) {
+      categories.add(category);
+      await hiveHandler.createCategory(category);
+    }
+  }
+}
 
 class MusicBloc extends Bloc<MusicEvent, MusicState> {
   MusicBloc() : super(InitMusicState(
@@ -132,6 +171,18 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
         emit(nextState);
         break;
       case AddMusicEvent:
+        AddedMusicState nextState = AddedMusicState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
+        );
+        await nextState.add((event as AddMusicEvent).music);
+        emit(nextState);
         break;
       case AddArtistEvent:
         break;

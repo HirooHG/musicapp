@@ -26,129 +26,129 @@ class HomeView extends StatelessWidget {
         return BlocBuilder<MusicBloc, MusicState>(
           builder: (context, musicState) {
             return AlertDialog(
-                title: Text(
-                  "select music name for \n$name",
-                  style: const TextStyle(
-                    fontFamily: "Ubuntu",
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xff7dba7a),
-                    fontSize: 15
-                  )
-                ),
-                backgroundColor: const Color(0xFF1a1a1a),
-                content: SizedBox(
-                  height: height * 0.3,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: width * 0.5,
-                        child: TextField(
-                          controller: nameController,
-                          style: const TextStyle(
+              title: Text(
+                "select music name for \n$name",
+                style: const TextStyle(
+                  fontFamily: "Ubuntu",
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff7dba7a),
+                  fontSize: 15
+                )
+              ),
+              backgroundColor: const Color(0xFF1a1a1a),
+              content: SizedBox(
+                height: height * 0.3,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: width * 0.5,
+                      child: TextField(
+                        controller: nameController,
+                        style: const TextStyle(
+                          color: Colors.white
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: "name",
+                          labelStyle: TextStyle(
                             color: Colors.white
                           ),
-                          decoration: const InputDecoration(
-                            labelText: "name",
-                            labelStyle: TextStyle(
-                              color: Colors.white
-                            ),
-                          ),
-                        )
-                      ),
-                      SizedBox(
+                        ),
+                      )
+                    ),
+                    SizedBox(
+                      width: width * 0.5,
+                      child: TextField(
+                        style: const TextStyle(
+                          color: Colors.white
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: "artist",
+                          labelStyle: TextStyle(
+                            color: Colors.white
+                          )
+                        ),
+                        onSubmitted: (value) {
+                        },
+                      )
+                    ),
+                    SizedBox(
                         width: width * 0.5,
                         child: TextField(
                           style: const TextStyle(
-                            color: Colors.white
+                              color: Colors.white
                           ),
                           decoration: const InputDecoration(
-                            labelText: "artist",
-                            labelStyle: TextStyle(
-                              color: Colors.white
-                            )
+                              labelText: "Category",
+                              labelStyle: TextStyle(
+                                  color: Colors.white
+                              )
                           ),
                           onSubmitted: (value) {
+
                           },
                         )
-                      ),
-                      SizedBox(
-                          width: width * 0.5,
-                          child: TextField(
-                            style: const TextStyle(
+                    ),
+                    SizedBox(
+                      width: width * 0.5,
+                      child: DropdownButtonFormField(
+                        value: musicState.currentArtist,
+                        items: musicState.artists.map((e) {
+                          return DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e.name,
+                              style: const TextStyle(
                                 color: Colors.white
+                              )
                             ),
-                            decoration: const InputDecoration(
-                                labelText: "Category",
-                                labelStyle: TextStyle(
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: width * 0.5,
+                      child: DropdownButtonFormField(
+                        value: musicState.currentCategory,
+                        items: musicState.categories.map((e) {
+                          return DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                                e.name,
+                                style: const TextStyle(
                                     color: Colors.white
                                 )
                             ),
-                            onSubmitted: (value) {
-
-                            },
-                          )
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                        },
                       ),
-                      SizedBox(
-                        width: width * 0.5,
-                        child: DropdownButtonFormField(
-                          value: musicState.currentArtist,
-                          items: musicState.artists.map((e) {
-                            return DropdownMenuItem(
-                              value: e,
-                              child: Text(
-                                e.name,
-                                style: const TextStyle(
-                                  color: Colors.white
-                                )
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: width * 0.5,
-                        child: DropdownButtonFormField(
-                          value: musicState.currentCategory,
-                          items: musicState.categories.map((e) {
-                            return DropdownMenuItem(
-                              value: e,
-                              child: Text(
-                                  e.name,
-                                  style: const TextStyle(
-                                      color: Colors.white
-                                  )
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      var name = nameController.text;
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    var name = nameController.text;
 
-                      if(name.isNotEmpty) {
-                        nameController.text = "";
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: const Text(
-                      "register",
-                      style: TextStyle(
-                        fontFamily: "Ubuntu",
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xffff7bff)
-                      )
+                    if(name.isNotEmpty) {
+                      nameController.text = "";
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text(
+                    "register",
+                    style: TextStyle(
+                      fontFamily: "Ubuntu",
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xffff7bff)
                     )
                   )
-                ]
+                )
+              ]
             );
           },
         );
@@ -168,15 +168,24 @@ class HomeView extends StatelessWidget {
     //  isLoaded = true;
     //}
 
-    Hive.openBox<Music>("musics").then((value) {
+    Hive.openBox<Music>("musics").then((value) async {
       for (var i in value.values) {
         print(i.name);
+        print(value.values.length);
+
+        print("yay");
+        await Future.delayed(const Duration(milliseconds: 1000));
+        print("yay");
       }
 
-      for (var i in value.values) {
-        i.name = "yay";
-        print(i.name);
-      }
+      //for (var i in value.values) {
+      //  i.name = "yay";
+      //  print(i.name);
+      //}
+
+      //for(var i in value.values) {
+      //  print(i.name);
+      //}
     });
 
     return Scaffold(
