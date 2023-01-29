@@ -11,15 +11,20 @@ class HiveHandler {
   Future<Box<Artist>> get artistBox async => await Hive.openBox("artists");
   Future<Box<Category>> get categoryBox async => await Hive.openBox("categories");
 
-  //Create
-  Future createMusic(Music music) async {
-    await (await musicBox).add(music);
+  Future create(HiveObject obj, Box box) async {
+    if(!obj.isInBox) {
+      await box.add(obj);
+    }
   }
-  Future createCategory(Category category) async {
-    await (await categoryBox).add(category);
+  Future update(HiveObject obj) async {
+    if(obj.isInBox) {
+      obj.box!.put(obj.key, obj);
+    }
   }
-  Future createArtist(Artist artist) async {
-    await (await artistBox).add(artist);
+  Future delete(HiveObject obj) async {
+    if(obj.isInBox) {
+      obj.box!.delete(obj.key);
+    }
   }
 
   // Read
@@ -31,16 +36,5 @@ class HiveHandler {
   }
   Future<List<Category>> getCategories() async {
     return (await categoryBox).values.toList();
-  }
-
-  // Delete
-  Future deleteMusic(Music music) async {
-    await (await musicBox).delete(music);
-  }
-  Future deleteArtist(Artist artist) async {
-    await (await artistBox).delete(artist);
-  }
-  Future deleteCategory(Category category) async {
-    await (await categoryBox).delete(category);
   }
 }

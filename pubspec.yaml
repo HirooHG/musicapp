@@ -43,6 +43,7 @@ dependencies:
   hive_generator: ^2.0.0
   build_runner: ^2.3.3
   file_picker: ^5.2.5
+  percent_indicator: ^4.2.2
 
 dev_dependencies:
   flutter_test:

@@ -7,7 +7,7 @@ import "modelview/music.dart";
 import 'musicapp.dart';
 
 void main() async {
-  var dir = Directory("/data/user/0/fr.HirooHG.musicapp/Music");
+  var dir = Directory("/data/user/0/fr.HirooHG.musicapp/musics");
   if(! (await dir.exists())) {
     await dir.create();
   }

@@ -107,12 +107,25 @@ class MusicAdapter extends TypeAdapter<Music> {
   @override
   Music read(BinaryReader reader) {
     var map = reader.read() as Map<dynamic, dynamic>;
-    return Music(name: map["name"], artist: Artist(name: map["artist"]), link: map["link"], category: Category(name: map["category"]));
+    return Music(
+        name: map["name"],
+        artist: Artist(name: map["artist"]),
+        link: map["link"],
+        category: Category(name: map["category"]
+      )
+    );
   }
 
   @override
   void write(BinaryWriter writer, Music obj) {
-    writer.write({"name": obj.name,"artist": obj.artist.name, "link": obj.link, "category": obj.category.name});
+    writer.write(
+      {
+        "name": obj.name,
+        "artist": obj.artist.name,
+        "link": obj.link,
+        "category": obj.category.name
+      }
+    );
   }
 }
 class ArtistAdapter extends TypeAdapter<Artist> {
