@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 
 import 'music.dart';
 import 'package:musicapp/model/hivehandler.dart';
+import 'package:assets_audio_player/assets_audio_player.dart';
 
 
 // Events
@@ -126,10 +127,29 @@ class InitMusicState extends MusicState {
   Future init() async {
 
     musics = await hiveHandler.getMusics();
+    musics.sort();
+    allMusics.addAll(musics);
+
     categories = await hiveHandler.getCategories();
     artists = await hiveHandler.getArtist();
-    
-    musics.sort((a, b) => a.artist.name.compareTo(b.artist.name));
+    categories.sort();
+    artists.sort();
+
+    var allC = categories.singleWhere((element) => element.name == "All");
+    categories.remove(allC);
+    categories.insert(0, allC);
+
+    var noC = categories.singleWhere((element) => element.name == "No category");
+    categories.remove(noC);
+    categories.insert(0, noC);
+
+    var noA = artists.singleWhere((element) => element.name == "unknown");
+    artists.remove(noA);
+    artists.insert(0, noA);
+
+    var allA = artists.singleWhere((element) => element.name == "All");
+    artists.remove(allA);
+    artists.insert(0, allA);
 
     for(var i in musics) {
       var z = categories.singleWhere((element) => element.name == i.category.name);
@@ -138,16 +158,11 @@ class InitMusicState extends MusicState {
       i.artist = w;
     }
 
-    if(allMusics.isEmpty) {
-      allMusics.addAll(musics);
-    }
-
     if (!categories.any((element) => element.name == "All")) {
       await hiveHandler.create(Category(name: "All"), (await hiveHandler.categoryBox));
       await hiveHandler.create(Category.empty(), (await hiveHandler.categoryBox));
       categories = await hiveHandler.getCategories();
     }
-
     if (!artists.any((element) => element.name == "All")) {
       await hiveHandler.create(Artist(name: "All"), (await hiveHandler.artistBox));
       await hiveHandler.create(Artist.empty(), (await hiveHandler.artistBox));

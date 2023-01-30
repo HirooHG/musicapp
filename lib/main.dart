@@ -13,8 +13,8 @@ void main() async {
   }
 
   await Hive.initFlutter();
-  Hive.registerAdapter(MusicAdapter());
-  Hive.registerAdapter(ArtistAdapter());
-  Hive.registerAdapter(CategoryAdapter());
-  runApp(const MusicApp());
+  Hive.registerAdapter<Music>(MusicAdapter());
+  Hive.registerAdapter<Artist>(ArtistAdapter());
+  Hive.registerAdapter<Category>(CategoryAdapter());
+  runApp(MusicApp());
 }

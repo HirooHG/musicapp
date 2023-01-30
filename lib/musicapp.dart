@@ -1,7 +1,23 @@
 
 import 'package:flutter/material.dart';
-import 'musicpage.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:musicapp/view/homeview.dart';
+import 'modelview/cubits.dart';
+import 'modelview/musicbloc.dart';
 
 class MusicApp extends MaterialApp {
-  const MusicApp({super.key}) : super(home: const MusicPage(), debugShowCheckedModeBanner: false);
+  MusicApp({super.key}) : super(
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<MusicBloc>(
+            create: (_) => MusicBloc()
+        ),
+        BlocProvider<PauseCubit>(
+            create: (_) => PauseCubit()
+        ),
+      ],
+      child: HomeView(),
+    ),
+    debugShowCheckedModeBanner: false
+  );
 }

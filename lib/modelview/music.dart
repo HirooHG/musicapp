@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 //class
-class Music extends HiveObject {
+class Music extends HiveObject with Comparable<Music> {
 
   String name;
   Artist artist;
@@ -13,9 +13,9 @@ class Music extends HiveObject {
 
   Audio? _audio;
 
-  Audio? get audio {
+  Audio get audio {
     _audio ??= Audio(link);
-    return _audio;
+    return _audio!;
   }
 
   Music({
@@ -54,8 +54,13 @@ class Music extends HiveObject {
         && key == other.key
         && box == other.box;
   }
+
+  @override
+  int compareTo(other) {
+    return name.compareTo(other.name);
+  }
 }
-class Category extends HiveObject{
+class Category extends HiveObject with Comparable<Category>{
   String name;
 
   Category({required this.name});
@@ -75,8 +80,13 @@ class Category extends HiveObject{
         && key == other.key
         && box == other.box;
   }
+
+  @override
+  int compareTo(other) {
+    return name.compareTo(other.name);
+  }
 }
-class Artist extends HiveObject{
+class Artist extends HiveObject with Comparable<Artist>{
 
   String name;
 
@@ -96,6 +106,11 @@ class Artist extends HiveObject{
         && name == (other as Artist).name
         && key == other.key
         && box == other.box;
+  }
+
+  @override
+  int compareTo(other) {
+    return name.compareTo(other.name);
   }
 }
 

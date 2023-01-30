@@ -16,8 +16,7 @@ class HomeView extends StatelessWidget {
   late double height;
 
   bool isLoaded = false;
-  bool isLoadedCat = false;
-  bool isLoadedArt = false;
+  bool isPlaylistLoaded = false;
 
   final ScrollController scrollController = ScrollController();
   final assetAudio = AssetsAudioPlayer();
@@ -31,10 +30,9 @@ class HomeView extends StatelessWidget {
 
     if(!isLoaded) {
       BlocProvider.of<MusicBloc>(context).add(const InitMusicEvent());
-      assetAudio.setLoopMode(LoopMode.playlist);
+      assetAudio.setLoopMode(LoopMode.single);
       isLoaded = true;
     }
-
 
     return Scaffold(
         appBar: AppBar(
@@ -53,7 +51,6 @@ class HomeView extends StatelessWidget {
           color: const Color(0xFF1a1a1a),
           child: BlocBuilder<MusicBloc, MusicState>(
             builder: (context, musicState) {
-
               var searchedMusics = <Music>[];
               searchedMusics.addAll(musicState.musics);
 
@@ -61,19 +58,21 @@ class HomeView extends StatelessWidget {
                 return s.name.contains(searchedMusic.toLowerCase());
               });
 
-              //assetAudio.playlistAudioFinished.listen((event) {
-              //  Music nextMusic;
-              //  try {
-              //    nextMusic = musicState.musics[musicState.musics.indexOf(musicState.currentMusic) + 1];
-              //  } catch(e) {
-              //    nextMusic = musicState.musics[0];
-              //  }
-              //  BlocProvider.of<PauseCubit>(context).change(false);
-              //  BlocProvider.of<MusicBloc>(context).add(SelectMusicEvent(music: nextMusic));
-              //  assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
-              //  var posMusic = musicState.musics.indexOf(nextMusic);
-              //  scrollController.jumpTo(109 * posMusic.toDouble());
-              //});
+              assetAudio.playlistAudioFinished.listen((event) {
+                if(musicState.musics.isNotEmpty && !assetAudio.isPlaying.value) {
+                  Music nextMusic;
+                  try {
+                    nextMusic = musicState.musics[musicState.musics.indexOf(musicState.currentMusic) + 1];
+                  } catch(e) {
+                    nextMusic = musicState.musics[0];
+                  }
+                  BlocProvider.of<PauseCubit>(context).change(true);
+                  BlocProvider.of<MusicBloc>(context).add(SelectMusicEvent(music: nextMusic));
+                  assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
+                  var posMusic = musicState.musics.indexOf(nextMusic);
+                  scrollController.jumpTo(109 * posMusic.toDouble());
+                }
+              });
 
               return Stack(
                 children: [
