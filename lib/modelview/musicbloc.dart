@@ -479,14 +479,14 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
         break;
       case GetAllMusic:
         GotAllMusic nextState = GotAllMusic(
-            musics: state.musics,
-            allMusics: state.allMusics,
-            categories: state.categories,
-            currentMusic: state.currentMusic,
-            currentCategory: state.currentCategory,
-            artists: state.artists,
-            currentArtist: state.currentArtist,
-            hiveHandler: state.hiveHandler
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
         );
         nextState.get();
         emit(nextState);
@@ -619,42 +619,42 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
         break;
       case DeleteArtistEvent:
         DeletedArtistState nextState = DeletedArtistState(
-            musics: state.musics,
-            allMusics: state.allMusics,
-            categories: state.categories,
-            currentMusic: state.currentMusic,
-            currentCategory: state.currentCategory,
-            artists: state.artists,
-            currentArtist: state.currentArtist,
-            hiveHandler: state.hiveHandler
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
         );
         await nextState.delete((event as DeleteArtistEvent).artist);
         emit(nextState);
         break;
       case DeleteCategoryEvent:
         DeletedCategoryState nextState = DeletedCategoryState(
-            musics: state.musics,
-            allMusics: state.allMusics,
-            categories: state.categories,
-            currentMusic: state.currentMusic,
-            currentCategory: state.currentCategory,
-            artists: state.artists,
-            currentArtist: state.currentArtist,
-            hiveHandler: state.hiveHandler
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
         );
         await nextState.delete((event as DeleteCategoryEvent).category);
         emit(nextState);
         break;
       case DeleteMusicEvent:
         DeletedMusicState nextState = DeletedMusicState(
-            musics: state.musics,
-            allMusics: state.allMusics,
-            categories: state.categories,
-            currentMusic: state.currentMusic,
-            currentCategory: state.currentCategory,
-            artists: state.artists,
-            currentArtist: state.currentArtist,
-            hiveHandler: state.hiveHandler
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          hiveHandler: state.hiveHandler
         );
         await nextState.delete((event as DeleteMusicEvent).music);
         emit(nextState);

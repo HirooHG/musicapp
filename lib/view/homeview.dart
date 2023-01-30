@@ -31,17 +31,19 @@ class HomeView extends StatelessWidget {
 
     if(!isLoaded) {
       BlocProvider.of<MusicBloc>(context).add(const InitMusicEvent());
+      assetAudio.setLoopMode(LoopMode.playlist);
       isLoaded = true;
     }
 
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1a1a),
-        shadowColor: Colors.white,
-        elevation: 2.0,
-        title: const Text(
-          "Music",
-          style: TextStyle(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1a1a1a),
+          shadowColor: Colors.white,
+          elevation: 2.0,
+          title: const Text(
+            "Music",
+            style: TextStyle(
             fontFamily: "Ubuntu"
           ),
         ),
@@ -59,6 +61,20 @@ class HomeView extends StatelessWidget {
                 return s.name.contains(searchedMusic.toLowerCase());
               });
 
+              //assetAudio.playlistAudioFinished.listen((event) {
+              //  Music nextMusic;
+              //  try {
+              //    nextMusic = musicState.musics[musicState.musics.indexOf(musicState.currentMusic) + 1];
+              //  } catch(e) {
+              //    nextMusic = musicState.musics[0];
+              //  }
+              //  BlocProvider.of<PauseCubit>(context).change(false);
+              //  BlocProvider.of<MusicBloc>(context).add(SelectMusicEvent(music: nextMusic));
+              //  assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
+              //  var posMusic = musicState.musics.indexOf(nextMusic);
+              //  scrollController.jumpTo(109 * posMusic.toDouble());
+              //});
+
               return Stack(
                 children: [
                   Column(
@@ -70,122 +86,122 @@ class HomeView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Container(
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: (musicState.allMusics.length == musicState.musics.length)
-                                      ? Colors.white
-                                      : Colors.grey,
-                                    width: 2
-                                  )
+                                decoration: BoxDecoration(
+                                    border: Border(
+                                        bottom: BorderSide(
+                                            color: (musicState.allMusics.length == musicState.musics.length)
+                                                ? Colors.white
+                                                : Colors.grey,
+                                            width: 2
+                                        )
+                                    )
+                                ),
+                                child: TextButton(
+                                    onPressed: () {
+                                      BlocProvider.of<MusicBloc>(context).add(const GetAllMusic());
+                                    },
+                                    child: Text(
+                                      "Tous",
+                                      style: TextStyle(
+                                          fontFamily: "Ubuntu",
+                                          fontWeight: FontWeight.bold,
+                                          color: (musicState.allMusics.length == musicState.musics.length)
+                                              ? Colors.white
+                                              : Colors.grey
+                                      ),
+                                    )
                                 )
-                              ),
-                              child: TextButton(
-                                onPressed: () {
-                                  BlocProvider.of<MusicBloc>(context).add(const GetAllMusic());
-                                },
-                                child: Text(
-                                  "Tous",
-                                  style: TextStyle(
-                                    fontFamily: "Ubuntu",
-                                    fontWeight: FontWeight.bold,
-                                    color: (musicState.allMusics.length == musicState.musics.length)
-                                      ? Colors.white
-                                      : Colors.grey
-                                  ),
-                                )
-                              )
                             ),
                             Container(
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(
-                                    color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
-                                      ? Colors.white
-                                      : Colors.grey,
-                                    width: 2
-                                  )
+                                    bottom: BorderSide(
+                                        color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
+                                            ? Colors.white
+                                            : Colors.grey,
+                                        width: 2
+                                    )
                                 ),
                               ),
                               child: DropdownButton<Category>(
-                                value: musicState.currentCategory,
-                                dropdownColor: Colors.black,
-                                menuMaxHeight: height * 0.2,
-                                underline: Container(),
-                                icon: Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
-                                    ? Colors.white
-                                    : Colors.grey,
-                                ),
-                                items: musicState.categories.map((cat) {
-                                  return DropdownMenuItem(
-                                    value: cat,
-                                    child: SizedBox(
-                                      width: width * 0.3,
-                                      child: Text(
-                                        cat.name,
-                                        style: TextStyle(
-                                          fontFamily: "Ubuntu",
-                                          color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
-                                            ? Colors.white
-                                            : Colors.grey,
-                                        ),
-                                      ),
-                                    )
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if(value != null) {
-                                    BlocProvider.of<MusicBloc>(context).add(ChangeCategoryEvent(category: value));
+                                  value: musicState.currentCategory,
+                                  dropdownColor: Colors.black,
+                                  menuMaxHeight: height * 0.2,
+                                  underline: Container(),
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
+                                        ? Colors.white
+                                        : Colors.grey,
+                                  ),
+                                  items: musicState.categories.map((cat) {
+                                    return DropdownMenuItem(
+                                        value: cat,
+                                        child: SizedBox(
+                                          width: width * 0.3,
+                                          child: Text(
+                                            cat.name,
+                                            style: TextStyle(
+                                              fontFamily: "Ubuntu",
+                                              color: (musicState.currentCategory.name != "No category" && musicState.currentCategory.name != "All")
+                                                  ? Colors.white
+                                                  : Colors.grey,
+                                            ),
+                                          ),
+                                        )
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    if(value != null) {
+                                      BlocProvider.of<MusicBloc>(context).add(ChangeCategoryEvent(category: value));
+                                    }
                                   }
-                                }
                               ),
                             ),
                             Container(
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(
-                                    color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
-                                      ? Colors.white
-                                      : Colors.grey,
-                                    width: 2
-                                  )
+                                    bottom: BorderSide(
+                                        color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
+                                            ? Colors.white
+                                            : Colors.grey,
+                                        width: 2
+                                    )
                                 ),
                               ),
                               child: DropdownButton<Artist>(
-                                value: musicState.currentArtist,
-                                underline: Container(),
-                                menuMaxHeight: height * 0.5,
-                                dropdownColor: Colors.black,
-                                icon: Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
-                                    ? Colors.white
-                                    : Colors.grey,
-                                ),
-                                items: musicState.artists.map((art) {
-                                  return DropdownMenuItem(
-                                    value: art,
-                                    child: SizedBox(
-                                      width: width * 0.3,
-                                      child: Text(
-                                        art.name,
-                                        style: TextStyle(
-                                          fontFamily: "Ubuntu",
-                                          color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
-                                            ? Colors.white
-                                            : Colors.grey,
-                                        ),
-                                      )
-                                    )
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if(value != null) {
-                                    BlocProvider.of<MusicBloc>(context).add(ChangeArtistEvent(artist: value));
+                                  value: musicState.currentArtist,
+                                  underline: Container(),
+                                  menuMaxHeight: height * 0.5,
+                                  dropdownColor: Colors.black,
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
+                                        ? Colors.white
+                                        : Colors.grey,
+                                  ),
+                                  items: musicState.artists.map((art) {
+                                    return DropdownMenuItem(
+                                        value: art,
+                                        child: SizedBox(
+                                            width: width * 0.3,
+                                            child: Text(
+                                              art.name,
+                                              style: TextStyle(
+                                                fontFamily: "Ubuntu",
+                                                color: (musicState.currentArtist.name != "unknown" && musicState.currentArtist.name != "All")
+                                                    ? Colors.white
+                                                    : Colors.grey,
+                                              ),
+                                            )
+                                        )
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    if(value != null) {
+                                      BlocProvider.of<MusicBloc>(context).add(ChangeArtistEvent(artist: value));
+                                    }
                                   }
-                                }
                               ),
                             )
                           ],
@@ -448,6 +464,7 @@ class HomeView extends StatelessWidget {
                               } catch(e) {
                                 nextMusic = musicState.musics[0];
                               }
+                              BlocProvider.of<PauseCubit>(context).change(false);
                               BlocProvider.of<MusicBloc>(context).add(SelectMusicEvent(music: nextMusic));
                               assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
                               var posMusic = musicState.musics.indexOf(nextMusic);
