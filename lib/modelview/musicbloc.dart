@@ -2,40 +2,284 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'music.dart';
 import 'package:musicapp/model/hivehandler.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:flutter/material.dart';
 
 
 // Events
 abstract class MusicEvent {
   const MusicEvent();
 }
-class InitMusicEvent extends MusicEvent {
-  const InitMusicEvent();
-}
-class ChangeCategoryEvent extends MusicEvent {
-  ChangeCategoryEvent({required this.category});
-
-  final Category category;
-}
-class ChangeArtistEvent extends MusicEvent {
-  ChangeArtistEvent({required this.artist});
-
-  final Artist artist;
-}
 class SaveJsonDataEvent extends MusicEvent {
   const SaveJsonDataEvent();
 }
-class GetAllMusic extends MusicEvent {
-  const GetAllMusic();
-}
 class SearchMusic extends MusicEvent {
-  const SearchMusic();
+  const SearchMusic({required this.value, required this.searchValue});
+
+  final String value;
+  final int searchValue;
+}
+class InitMusicEvent extends MusicEvent {
+  const InitMusicEvent({required this.context});
+
+  final BuildContext context;
+}
+class SortMusicsEvent extends MusicEvent {
+  const SortMusicsEvent({
+    required this.value
+  });
+
+  final int value;
+}
+class NextMusicEvent extends MusicEvent {
+  const NextMusicEvent();
+}
+class SelectMusicEvent extends MusicEvent {
+  SelectMusicEvent({this.music});
+
+  final Music? music;
 }
 
-// CRUD
+// States
+abstract class MusicState {
+  // musics
+  List<Music> musics;
+  List<Music> allMusics;
+  Music currentMusic;
+
+  // categories
+  List<Category> categories;
+  Category currentCategory;
+
+  // artists
+  List<Artist> artists;
+  Artist currentArtist;
+
+  // modeling
+  HiveHandler hiveHandler;
+
+  // others
+  final AssetsAudioPlayer assetAudio;
+  final ScrollController scrollController;
+  final jump = 93;
+
+  MusicState({
+    required this.musics,
+    required this.artists,
+    required this.categories,
+    required this.allMusics,
+    required this.currentMusic,
+    required this.currentCategory,
+    required this.currentArtist,
+    required this.hiveHandler,
+    required this.assetAudio,
+    required this.scrollController,
+  });
+}
+class InitMusicState extends MusicState {
+  InitMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  Future<void> init(BuildContext context) async {
+
+    musics = await hiveHandler.getMusics();
+    categories = await hiveHandler.getCategories();
+    artists = await hiveHandler.getArtist();
+
+    var allC = categories.singleWhere((element) => element.name == "All");
+    categories.remove(allC);
+    categories.insert(0, allC);
+
+    var noC = categories.singleWhere((element) => element.name == "No category");
+    categories.remove(noC);
+    categories.insert(0, noC);
+
+    var noA = artists.singleWhere((element) => element.name == "unknown");
+    artists.remove(noA);
+    artists.insert(0, noA);
+
+    var allA = artists.singleWhere((element) => element.name == "All");
+    artists.remove(allA);
+    artists.insert(0, allA);
+
+    for(var i in musics) {
+      var z = categories.singleWhere((element) => element.name == i.category.name);
+      var w = artists.singleWhere((element) => element.name == i.artist.name);
+      i.category = z;
+      i.artist = w;
+    }
+
+    if (!categories.any((element) => element.name == "All")) {
+      await hiveHandler.create(Category(name: "All"), (await hiveHandler.categoryBox));
+      await hiveHandler.create(Category.empty(), (await hiveHandler.categoryBox));
+      categories = await hiveHandler.getCategories();
+    }
+    if (!artists.any((element) => element.name == "All")) {
+      await hiveHandler.create(Artist(name: "All"), (await hiveHandler.artistBox));
+      await hiveHandler.create(Artist.empty(), (await hiveHandler.artistBox));
+      artists = await hiveHandler.getArtist();
+    }
+
+    musics.sort();
+    categories.sort();
+    artists.sort();
+    
+    currentCategory = categories.singleWhere((element) => element.name == "All");
+    currentArtist = artists.singleWhere((element) => element.name == "All");
+  }
+}
+class SavedJsonDataState extends MusicState {
+  SavedJsonDataState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  Future save() async {
+    Map<String, Map<String, dynamic>> map = {};
+
+    for(var i in musics) {
+      map.addAll({ "${i.key}" : i.toMap() });
+    }
+
+    var text = jsonEncode(map);
+    await File("/data/user/0/fr.HirooHG.musicapp/files/JsonSaved").writeAsString(text);
+  }
+}
+class SearchedMusicState extends MusicState {
+  SearchedMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  void search(int searchValue, String value) {
+    if(value.isEmpty) {
+      scrollController.jumpTo(0);
+      return;
+    }
+
+    var list = musics.where((element) {
+      var val = (searchValue == 0)
+          ? element.name
+          : (searchValue == 1)
+          ? element.category.name
+          : element.artist.name;
+      return val.contains(value);
+    });
+    if(list.isNotEmpty) {
+      var music = list.first;
+      var pos = musics.indexOf(music).toDouble();
+      scrollController.jumpTo(jump * pos);
+    }
+  }
+}
+class SortedMusicsState extends MusicState {
+  SortedMusicsState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  void sort(int value) {
+    musics.sort((a, b) {
+      switch(value) {
+        case 0:
+          return a.compareTo(b);
+        case 1:
+          return a.category.compareTo(b.category);
+        default:
+          return a.artist.compareTo(b.artist);
+      }
+    });
+  }
+}
+class NextMusicState extends MusicState {
+  NextMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  void next() {
+    final pos = musics.indexOf(currentMusic) + 1;
+    Music nextMusic = musics[pos];
+    currentMusic = nextMusic;
+    assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
+    scrollController.jumpTo(jump * pos.toDouble());
+  }
+}
+class SelectedMusicState extends MusicState {
+  SelectedMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  void select(Music? music) {
+    if(music != null) {
+      var pos = musics.indexOf(music);
+      assetAudio.open(Audio.file(music.link), showNotification: true);
+      scrollController.jumpTo(jump * pos.toDouble());
+    } else {
+      music = musics[0];
+      assetAudio.open(Audio.file(music.link), showNotification: true);
+      scrollController.jumpTo(0);
+    }
+    currentMusic = music;
+  }
+}
+
+//#region CRUD
 class UpdateCategoryEvent extends MusicEvent {
   UpdateCategoryEvent({required this.category});
 
@@ -81,208 +325,7 @@ class DeleteArtistEvent extends MusicEvent {
 
   final Artist artist;
 }
-class SelectMusicEvent extends MusicEvent {
-  SelectMusicEvent({required this.music});
 
-  final Music music;
-}
-
-// States
-abstract class MusicState {
-  List<Music> musics;
-  List<Music> allMusics;
-  Music currentMusic;
-
-  List<Category> categories;
-  Category currentCategory;
-
-  List<Artist> artists;
-  Artist currentArtist;
-
-  HiveHandler hiveHandler;
-
-  MusicState({
-    required this.musics,
-    required this.artists,
-    required this.categories,
-    required this.allMusics,
-    required this.currentMusic,
-    required this.currentCategory,
-    required this.currentArtist,
-    required this.hiveHandler
-  });
-}
-class InitMusicState extends MusicState {
-  InitMusicState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-
-  Future init() async {
-
-    musics = await hiveHandler.getMusics();
-    musics.sort();
-    allMusics.addAll(musics);
-
-    categories = await hiveHandler.getCategories();
-    artists = await hiveHandler.getArtist();
-    categories.sort();
-    artists.sort();
-
-    var allC = categories.singleWhere((element) => element.name == "All");
-    categories.remove(allC);
-    categories.insert(0, allC);
-
-    var noC = categories.singleWhere((element) => element.name == "No category");
-    categories.remove(noC);
-    categories.insert(0, noC);
-
-    var noA = artists.singleWhere((element) => element.name == "unknown");
-    artists.remove(noA);
-    artists.insert(0, noA);
-
-    var allA = artists.singleWhere((element) => element.name == "All");
-    artists.remove(allA);
-    artists.insert(0, allA);
-
-    for(var i in musics) {
-      var z = categories.singleWhere((element) => element.name == i.category.name);
-      var w = artists.singleWhere((element) => element.name == i.artist.name);
-      i.category = z;
-      i.artist = w;
-    }
-
-    if (!categories.any((element) => element.name == "All")) {
-      await hiveHandler.create(Category(name: "All"), (await hiveHandler.categoryBox));
-      await hiveHandler.create(Category.empty(), (await hiveHandler.categoryBox));
-      categories = await hiveHandler.getCategories();
-    }
-    if (!artists.any((element) => element.name == "All")) {
-      await hiveHandler.create(Artist(name: "All"), (await hiveHandler.artistBox));
-      await hiveHandler.create(Artist.empty(), (await hiveHandler.artistBox));
-      artists = await hiveHandler.getArtist();
-    }
-
-    currentCategory = categories.singleWhere((element) => element.name == "All");
-    currentArtist = artists.singleWhere((element) => element.name == "All");
-  }
-}
-class ChangedCategoryState extends MusicState {
-  ChangedCategoryState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-
-  Future change() async {
-    musics = allMusics.where(
-      (element) {
-        if(currentCategory.name == "All" && currentArtist.name == "All"){
-          return true;
-        } else if (currentCategory.name == "All") {
-          return element.artist == currentArtist;
-        } else if (currentArtist.name == "All") {
-          return element.category == currentCategory;
-        } else {
-          return element.category == currentCategory && element.artist == currentArtist;
-        }
-      }
-    ).toList();
-  }
-}
-class ChangedArtistState extends MusicState {
-  ChangedArtistState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-
-  Future change() async {
-    musics = allMusics.where(
-      (element) {
-        if(currentCategory.name == "All" && currentArtist.name == "All"){
-          return true;
-        } else if (currentCategory.name == "All") {
-          return element.artist == currentArtist;
-        } else if (currentArtist.name == "All") {
-          return element.category == currentCategory;
-        } else {
-          return element.category == currentCategory && element.artist == currentArtist;
-        }
-      }
-    ).toList();
-  }
-}
-class SavedJsonDataState extends MusicState {
-  SavedJsonDataState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-
-  Future save() async {
-    Map<String, Map<String, dynamic>> map = {};
-
-    for(var i in musics) {
-      map.addAll({ "${i.key}" : i.toMap() });
-    }
-
-    var text = jsonEncode(map);
-    await File("/data/user/0/fr.HirooHG.musicapp/files/JsonSaved").writeAsString(text);
-  }
-}
-class GotAllMusic extends MusicState {
-  GotAllMusic({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-
-  void get() {
-    musics.clear();
-    musics.addAll(allMusics);
-  }
-}
-class SearchedMusicState extends MusicState {
-  SearchedMusicState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-}
-
-//CRUD
 class AddedMusicState extends MusicState {
   AddedMusicState({
     required super.musics,
@@ -292,7 +335,9 @@ class AddedMusicState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.hiveHandler,
+    required super.assetAudio,
+    required super.scrollController,
   });
 
   Future add(Music music) async {
@@ -311,7 +356,9 @@ class AddedArtistState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future add(Artist artist) async {
@@ -330,7 +377,9 @@ class AddedCategoryState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future add(Category category) async {
@@ -349,7 +398,9 @@ class UpdatedCategoryState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future update(Category category) async {
@@ -365,7 +416,9 @@ class UpdatedArtistState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future update(Artist artist) async {
@@ -381,7 +434,9 @@ class UpdatedMusicState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future update(Music music) async {
@@ -397,7 +452,9 @@ class DeletedCategoryState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future delete(Category category) async {
@@ -419,7 +476,9 @@ class DeletedArtistState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future delete(Artist artist) async {
@@ -441,26 +500,16 @@ class DeletedMusicState extends MusicState {
     required super.currentMusic,
     required super.currentCategory,
     required super.currentArtist,
-    required super.hiveHandler
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
   });
 
   Future delete(Music music) async {
     await hiveHandler.delete(music);
   }
 }
-class SelectedMusicState extends MusicState {
-  SelectedMusicState({
-    required super.musics,
-    required super.categories,
-    required super.artists,
-    required super.allMusics,
-    required super.currentMusic,
-    required super.currentCategory,
-    required super.currentArtist,
-    required super.hiveHandler
-  });
-}
-
+//#endregion
 
 class MusicBloc extends Bloc<MusicEvent, MusicState> {
   MusicBloc() : super(InitMusicState(
@@ -471,41 +520,16 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
     currentMusic: Music.empty(),
     currentCategory: Category.empty(),
     currentArtist: Artist.empty(),
-    hiveHandler: HiveHandler()
+    hiveHandler: HiveHandler(),
+    assetAudio: AssetsAudioPlayer(),
+    scrollController: ScrollController()
   )) {
     on<MusicEvent>(onMusicEvent);
   }
 
   onMusicEvent(event, emit) async {
     switch(event.runtimeType) {
-      case InitMusicEvent:
-        InitMusicState nextState = InitMusicState(
-          musics: state.musics,
-          allMusics: state.allMusics,
-          categories: state.categories,
-          currentMusic: state.currentMusic,
-          currentCategory: state.currentCategory,
-          artists: state.artists,
-          currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
-        );
-        await nextState.init();
-        emit(nextState);
-        break;
-      case GetAllMusic:
-        GotAllMusic nextState = GotAllMusic(
-          musics: state.musics,
-          allMusics: state.allMusics,
-          categories: state.categories,
-          currentMusic: state.currentMusic,
-          currentCategory: state.currentCategory,
-          artists: state.artists,
-          currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
-        );
-        nextState.get();
-        emit(nextState);
-        break;
+      //#region CRUD
       case AddMusicEvent:
         AddedMusicState nextState = AddedMusicState(
           musics: state.musics,
@@ -515,7 +539,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.add((event as AddMusicEvent).music);
         emit(nextState);
@@ -529,7 +555,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.add((event as AddArtistEvent).artist);
         emit(nextState);
@@ -543,37 +571,11 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.add((event as AddCategoryEvent).category);
-        emit(nextState);
-        break;
-      case ChangeCategoryEvent:
-        ChangedCategoryState nextState = ChangedCategoryState(
-          musics: state.musics,
-          allMusics: state.allMusics,
-          categories: state.categories,
-          currentMusic: state.currentMusic,
-          currentCategory: (event as ChangeCategoryEvent).category,
-          artists: state.artists,
-          currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
-        );
-        await nextState.change();
-        emit(nextState);
-        break;
-      case ChangeArtistEvent:
-        ChangedArtistState nextState = ChangedArtistState(
-          musics: state.musics,
-          allMusics: state.allMusics,
-          categories: state.categories,
-          currentMusic: state.currentMusic,
-          currentCategory: state.currentCategory,
-          artists: state.artists,
-          currentArtist: (event as ChangeArtistEvent).artist,
-          hiveHandler: state.hiveHandler
-        );
-        await nextState.change();
         emit(nextState);
         break;
       case SaveJsonDataEvent:
@@ -585,7 +587,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.save();
         emit(nextState);
@@ -599,7 +603,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.update((event as UpdateArtistEvent).artist);
         emit(nextState);
@@ -613,7 +619,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.update((event as UpdateCategoryEvent).category);
         emit(nextState);
@@ -627,7 +635,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.update((event as UpdateMusicEvent).music);
         emit(nextState);
@@ -641,7 +651,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.delete((event as DeleteArtistEvent).artist);
         emit(nextState);
@@ -655,7 +667,9 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.delete((event as DeleteCategoryEvent).category);
         emit(nextState);
@@ -669,22 +683,28 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
         );
         await nextState.delete((event as DeleteMusicEvent).music);
         emit(nextState);
         break;
+        //#endregion
       case SelectMusicEvent:
         SelectedMusicState nextState = SelectedMusicState(
           musics: state.musics,
           allMusics: state.allMusics,
           categories: state.categories,
-          currentMusic: (event as SelectMusicEvent).music,
+          currentMusic: state.currentMusic,
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
-        );
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        )
+          ..select(event.music);
         emit(nextState);
         break;
       case SearchMusic:
@@ -696,9 +716,61 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           currentCategory: state.currentCategory,
           artists: state.artists,
           currentArtist: state.currentArtist,
-          hiveHandler: state.hiveHandler
-        );
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        )
+          ..search((event as SearchMusic).searchValue, event.value);
         emit(nextState);
+        break;
+      case InitMusicEvent:
+        InitMusicState nextState = InitMusicState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        );
+        await nextState.init((event as InitMusicEvent).context);
+        emit(nextState);
+        break;
+      case SortMusicsEvent:
+        SortedMusicsState nextState = SortedMusicsState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        )
+          ..sort((event as SortMusicsEvent).value);
+        emit(nextState);
+        break;
+      case NextMusicEvent:
+        NextMusicState nextState = NextMusicState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        )
+          ..next();
+        emit(nextState);
+        break;
     }
   }
 }

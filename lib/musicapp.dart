@@ -15,6 +15,9 @@ class MusicApp extends MaterialApp {
         BlocProvider<PauseCubit>(
             create: (_) => PauseCubit()
         ),
+        BlocProvider<SearchValue>(
+          create: (_) => SearchValue(),
+        )
       ],
       child: HomeView(),
     ),
