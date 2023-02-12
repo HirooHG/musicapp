@@ -7,8 +7,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 class Music extends HiveObject with Comparable<Music> {
 
   String name;
-  Artist artist;
   String link;
+  Artist artist;
   Category category;
 
   Audio? _audio;

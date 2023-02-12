@@ -43,6 +43,9 @@ class SelectMusicEvent extends MusicEvent {
 
   final Music? music;
 }
+class PreviousMusicEvent extends MusicEvent {
+  const PreviousMusicEvent();
+}
 
 // States
 abstract class MusicState {
@@ -278,6 +281,31 @@ class SelectedMusicState extends MusicState {
     currentMusic = music;
   }
 }
+class PreviousMusicState extends MusicState {
+  PreviousMusicState({
+    required super.musics,
+    required super.categories,
+    required super.artists,
+    required super.allMusics,
+    required super.currentMusic,
+    required super.currentCategory,
+    required super.currentArtist,
+    required super.assetAudio,
+    required super.hiveHandler,
+    required super.scrollController,
+  });
+
+  void previous() {
+    int pos = musics.indexOf(currentMusic) - 1;
+    if(pos == -1) {
+      pos = musics.length - 1;
+    }
+    Music nextMusic = musics[pos];
+    currentMusic = nextMusic;
+    assetAudio.open(Audio.file(nextMusic.link), showNotification: true);
+    scrollController.jumpTo(jump * pos.toDouble());
+  }
+}
 
 //#region CRUD
 class UpdateCategoryEvent extends MusicEvent {
@@ -506,6 +534,7 @@ class DeletedMusicState extends MusicState {
   });
 
   Future delete(Music music) async {
+    await File(music.link).delete();
     await hiveHandler.delete(music);
   }
 }
@@ -769,6 +798,22 @@ class MusicBloc extends Bloc<MusicEvent, MusicState> {
           scrollController: state.scrollController,
         )
           ..next();
+        emit(nextState);
+        break;
+      case PreviousMusicEvent:
+        PreviousMusicState nextState = PreviousMusicState(
+          musics: state.musics,
+          allMusics: state.allMusics,
+          categories: state.categories,
+          currentMusic: state.currentMusic,
+          currentCategory: state.currentCategory,
+          artists: state.artists,
+          currentArtist: state.currentArtist,
+          assetAudio: state.assetAudio,
+          hiveHandler: state.hiveHandler,
+          scrollController: state.scrollController,
+        )
+          ..previous();
         emit(nextState);
         break;
     }

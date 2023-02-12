@@ -16,16 +16,8 @@ class HiveHandler {
       await box.add(obj);
     }
   }
-  Future update(HiveObject obj) async {
-    if(obj.isInBox) {
-      obj.box!.put(obj.key, obj);
-    }
-  }
-  Future delete(HiveObject obj) async {
-    if(obj.isInBox) {
-      obj.box!.delete(obj.key);
-    }
-  }
+  Future update(HiveObject obj) async => await obj.save();
+  Future delete(HiveObject obj) async => await obj.delete();
 
   // Read
   Future<List<Music>> getMusics() async {

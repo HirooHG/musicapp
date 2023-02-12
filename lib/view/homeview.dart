@@ -4,10 +4,10 @@ import 'package:animated_icon/animate_icon.dart';
 import 'package:animated_icon/animate_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:musicapp/view/musicview.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
+import 'package:musicapp/view/playingmusicview.dart';
 import 'package:musicapp/modelview/musicbloc.dart';
 import 'package:musicapp/modelview/cubits.dart';
 
@@ -29,7 +29,7 @@ class HomeView extends StatelessWidget {
     height = MediaQuery.of(context).size.height;
 
     return Scaffold(
-        appBar: AppBar(
+      appBar: AppBar(
         backgroundColor: const Color(0xFF1a1a1a),
         shadowColor: Colors.white,
         elevation: 2.0,
@@ -289,7 +289,7 @@ class HomeView extends StatelessWidget {
                                                             value: BlocProvider.of<MusicBloc>(context)
                                                           ),
                                                           BlocProvider.value(
-                                                            value: BlocProvider.of<MusicBloc>(context)
+                                                            value: BlocProvider.of<PauseCubit>(context)
                                                           )
                                                         ],
                                                         child: MusicView(music: music)
@@ -350,66 +350,97 @@ class MusicBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  margin: const EdgeInsets.only(left: 20),
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.black,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      "photo",
-                      style: TextStyle(
+                Hero(
+                  tag: "musicphoto",
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.black,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "photo",
+                        style: TextStyle(
                           fontSize: 10,
                           color: Colors.white
+                        ),
                       ),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 10),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          musicState.currentMusic.name,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontFamily: "Ubuntu",
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MultiBlocProvider(
+                            providers: [
+                              BlocProvider.value(
+                                value: BlocProvider.of<MusicBloc>(context)
+                              ),
+                              BlocProvider.value(
+                                value: BlocProvider.of<PauseCubit>(context)
+                              )
+                            ],
+                            child: PlayingMusicView()
+                          )
+                        )
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            musicState.currentMusic.name,
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontFamily: "Ubuntu",
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18
+                            ),
                           ),
-                        ),
-                        Text(
-                          musicState.currentMusic.artist.name,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontFamily: "Ubuntu",
-                            fontStyle: FontStyle.italic
+                          Text(
+                            musicState.currentMusic.artist.name,
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontFamily: "Ubuntu",
+                              fontStyle: FontStyle.italic
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    BlocProvider.of<PauseCubit>(context).change(true);
+                    BlocProvider.of<MusicBloc>(context).add(const PreviousMusicEvent());
+                  },
+                  icon: const Icon(Icons.skip_previous),
                 ),
                 StreamBuilder(
                   stream: musicState.assetAudio.currentPosition,
                   builder: (context, snapshot) {
-                    var pos = snapshot.data;
                     double percent = 0;
+                    Duration duration = const Duration();
+                    Duration pos = const Duration();
 
                     try {
-                      var duration = musicState.assetAudio.current.value!.audio.duration;
-                      var posSec = pos!.inSeconds;
-                      percent = posSec / duration.inSeconds;
+                      duration = musicState.assetAudio.current.value!.audio.duration;
+                      pos = snapshot.data!;
+                      percent = pos.inSeconds / duration.inSeconds;
                     } catch(e) {
                       //
                     }

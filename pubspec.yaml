@@ -45,6 +45,7 @@ dependencies:
   file_picker: ^5.2.5
   percent_indicator: ^4.2.2
   animated_icon: ^0.0.4
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:
